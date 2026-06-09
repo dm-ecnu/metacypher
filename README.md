@@ -5,6 +5,20 @@ submission. It contains the method code only: external baselines, paper result
 files, temporary JSONL outputs, debug fixtures, and cache directories are kept
 outside this release tree.
 
+## Quick start (offline smoke)
+
+No Neo4j, no vLLM, no benchmark data, no network — checks that config resolves
+and the pure query-analysis logic (schema edge-direction detection, tolerant
+JSON parsing) works on a fresh checkout:
+
+```bash
+cd metacypher && python ../examples/smoke_offline.py
+```
+
+Expected tail: `MetaCypher offline smoke: PASSED`. The full pipeline
+additionally needs benchmark data, a Neo4j instance, and an OpenAI-compatible
+LLM endpoint — see Setup and Running the pipeline below.
+
 ## Framework
 
 ![MetaCypher framework](docs/framework.png)
