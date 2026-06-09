@@ -1,13 +1,14 @@
+# Reference-pinned versions; looser ranges (>=) also work for most use cases.
 # Core pipeline
-neo4j>=5.0
-networkx>=3.0
-numpy>=1.24
-tqdm>=4.65
-openai>=1.0           # OpenAI-compatible client for the vLLM endpoint
+neo4j==5.28.1
+networkx==3.4.2
+numpy==1.26.4
+tqdm==4.67.1
+openai==1.59.6        # OpenAI-compatible client for the vLLM endpoint
 
 # Embedding / attribute search (optional — only needed for FAISS attribute
 # matching in hidden_search_attr.py / search_entity.py / path_search.py)
-sentence-transformers>=2.2
-transformers>=4.40
-torch>=2.0
-faiss-cpu>=1.7        # or faiss-gpu if you have CUDA
+sentence-transformers==3.3.1
+transformers==4.48.0
+torch==2.5.1
+faiss-cpu==1.9.0      # or faiss-gpu if you have CUDA

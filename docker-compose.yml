@@ -1,0 +1,307 @@
+# MetaCypher — Docker Compose
+#
+# Brings up one neo4j:5 container per CypherBench graph (11 instances)
+# plus the MetaCypher app container.
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f metacypher
+#   docker compose down
+#
+# Data note: mount host volumes under ./neo4j-data/<graph>/{data,logs}
+# if you want graph data to survive container restarts.
+
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# YAML anchors — shared Neo4j settings reused by every graph service
+# ---------------------------------------------------------------------------
+x-neo4j-common: &neo4j-common
+  image: neo4j:5
+  environment:
+    NEO4J_AUTH: neo4j/cypherbench
+    # Increase memory for larger graphs; tune per-container if needed.
+    NEO4J_server_memory_heap_initial__size: "512m"
+    NEO4J_server_memory_heap_max__size: "1g"
+    NEO4J_server_memory_pagecache_size: "512m"
+    # Allow remote connections from the app container.
+    NEO4J_dbms_default__listen__address: "0.0.0.0"
+  networks:
+    - metacypher-net
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+    interval: 15s
+    timeout: 10s
+    retries: 10
+    start_period: 60s
+
+# ---------------------------------------------------------------------------
+# Services
+# ---------------------------------------------------------------------------
+services:
+
+  # ---- CypherBench graphs (bolt ports 15060–15070) ---- #
+
+  neo4j-art:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-art
+    ports:
+      - "15060:7687"   # bolt
+      - "17060:7474"   # http (browse at http://localhost:17060)
+    volumes:
+      - ./neo4j-data/art/data:/data
+      - ./neo4j-data/art/logs:/logs
+
+  neo4j-biology:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-biology
+    ports:
+      - "15061:7687"
+      - "17061:7474"
+    volumes:
+      - ./neo4j-data/biology/data:/data
+      - ./neo4j-data/biology/logs:/logs
+
+  neo4j-company:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-company
+    ports:
+      - "15062:7687"
+      - "17062:7474"
+    volumes:
+      - ./neo4j-data/company/data:/data
+      - ./neo4j-data/company/logs:/logs
+
+  neo4j-fictional-character:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-fictional-character
+    ports:
+      - "15063:7687"
+      - "17063:7474"
+    volumes:
+      - ./neo4j-data/fictional_character/data:/data
+      - ./neo4j-data/fictional_character/logs:/logs
+
+  neo4j-flight-accident:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-flight-accident
+    ports:
+      - "15064:7687"
+      - "17064:7474"
+    volumes:
+      - ./neo4j-data/flight_accident/data:/data
+      - ./neo4j-data/flight_accident/logs:/logs
+
+  neo4j-geography:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-geography
+    ports:
+      - "15065:7687"
+      - "17065:7474"
+    volumes:
+      - ./neo4j-data/geography/data:/data
+      - ./neo4j-data/geography/logs:/logs
+
+  neo4j-movie:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-movie
+    ports:
+      - "15066:7687"
+      - "17066:7474"
+    volumes:
+      - ./neo4j-data/movie/data:/data
+      - ./neo4j-data/movie/logs:/logs
+
+  neo4j-nba:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-nba
+    ports:
+      - "15067:7687"
+      - "17067:7474"
+    volumes:
+      - ./neo4j-data/nba/data:/data
+      - ./neo4j-data/nba/logs:/logs
+
+  neo4j-politics:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-politics
+    ports:
+      - "15068:7687"
+      - "17068:7474"
+    volumes:
+      - ./neo4j-data/politics/data:/data
+      - ./neo4j-data/politics/logs:/logs
+
+  neo4j-soccer:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-soccer
+    ports:
+      - "15069:7687"
+      - "17069:7474"
+    volumes:
+      - ./neo4j-data/soccer/data:/data
+      - ./neo4j-data/soccer/logs:/logs
+
+  neo4j-terrorist-attack:
+    <<: *neo4j-common
+    container_name: metacypher-neo4j-terrorist-attack
+    ports:
+      - "15070:7687"
+      - "17070:7474"
+    volumes:
+      - ./neo4j-data/terrorist_attack/data:/data
+      - ./neo4j-data/terrorist_attack/logs:/logs
+
+  # ---- MetaCypher application ---- #
+
+  metacypher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: metacypher-app
+    environment:
+      # Point the app at the Docker network service names, not localhost.
+      # The app resolves each graph by port; NEO4J_HOST must be a single host
+      # because all 11 containers sit on the same network and their bolt ports
+      # are forwarded to the host.  When running outside Docker, leave default.
+      NEO4J_HOST: host.docker.internal   # macOS/Windows Docker Desktop
+      # NEO4J_HOST: 172.17.0.1            # Linux: use the docker bridge gateway
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: cypherbench
+    networks:
+      - metacypher-net
+    depends_on:
+      neo4j-art:
+        condition: service_healthy
+      neo4j-biology:
+        condition: service_healthy
+      neo4j-company:
+        condition: service_healthy
+      neo4j-fictional-character:
+        condition: service_healthy
+      neo4j-flight-accident:
+        condition: service_healthy
+      neo4j-geography:
+        condition: service_healthy
+      neo4j-movie:
+        condition: service_healthy
+      neo4j-nba:
+        condition: service_healthy
+      neo4j-politics:
+        condition: service_healthy
+      neo4j-soccer:
+        condition: service_healthy
+      neo4j-terrorist-attack:
+        condition: service_healthy
+
+# ---------------------------------------------------------------------------
+# Sandbox graphs (commented out — uncomment to add; bolt ports 15091–15100)
+#
+# x-sandbox-common: &sandbox-common
+#   <<: *neo4j-common
+#
+# neo4j-bloom50:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-bloom50
+#   ports:
+#     - "15091:7687"
+#     - "17091:7474"
+#   volumes:
+#     - ./neo4j-data/bloom50/data:/data
+#     - ./neo4j-data/bloom50/logs:/logs
+#
+# neo4j-covid:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-covid
+#   ports:
+#     - "15092:7687"
+#     - "17092:7474"
+#   volumes:
+#     - ./neo4j-data/covid/data:/data
+#     - ./neo4j-data/covid/logs:/logs
+#
+# neo4j-er:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-er
+#   ports:
+#     - "15093:7687"
+#     - "17093:7474"
+#   volumes:
+#     - ./neo4j-data/er/data:/data
+#     - ./neo4j-data/er/logs:/logs
+#
+# neo4j-gdsc:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-gdsc
+#   ports:
+#     - "15094:7687"
+#     - "17094:7474"
+#   volumes:
+#     - ./neo4j-data/gdsc/data:/data
+#     - ./neo4j-data/gdsc/logs:/logs
+#
+# neo4j-healthcare:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-healthcare
+#   ports:
+#     - "15095:7687"
+#     - "17095:7474"
+#   volumes:
+#     - ./neo4j-data/healthcare/data:/data
+#     - ./neo4j-data/healthcare/logs:/logs
+#
+# neo4j-legis-graph:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-legis-graph
+#   ports:
+#     - "15096:7687"
+#     - "17096:7474"
+#   volumes:
+#     - ./neo4j-data/legis_graph/data:/data
+#     - ./neo4j-data/legis_graph/logs:/logs
+#
+# neo4j-osm:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-osm
+#   ports:
+#     - "15097:7687"
+#     - "17097:7474"
+#   volumes:
+#     - ./neo4j-data/osm/data:/data
+#     - ./neo4j-data/osm/logs:/logs
+#
+# neo4j-pole:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-pole
+#   ports:
+#     - "15098:7687"
+#     - "17098:7474"
+#   volumes:
+#     - ./neo4j-data/pole/data:/data
+#     - ./neo4j-data/pole/logs:/logs
+#
+# neo4j-twitter-trolls:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-twitter-trolls
+#   ports:
+#     - "15099:7687"
+#     - "17099:7474"
+#   volumes:
+#     - ./neo4j-data/twitter_trolls/data:/data
+#     - ./neo4j-data/twitter_trolls/logs:/logs
+#
+# neo4j-wwc:
+#   <<: *sandbox-common
+#   container_name: metacypher-neo4j-wwc
+#   ports:
+#     - "15100:7687"
+#     - "17100:7474"
+#   volumes:
+#     - ./neo4j-data/wwc/data:/data
+#     - ./neo4j-data/wwc/logs:/logs
+# ---------------------------------------------------------------------------
+
+networks:
+  metacypher-net:
+    driver: bridge

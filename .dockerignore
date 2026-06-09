@@ -1,0 +1,35 @@
+# MetaCypher — Docker build context exclusions
+
+# Large data / output directories (not needed in the image)
+data/
+outputs/
+neo4j-data/
+
+# Git history
+.git/
+.gitignore
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS noise
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Test / CI artifacts
+.pytest_cache/
+*.egg-info/
+dist/
+build/
