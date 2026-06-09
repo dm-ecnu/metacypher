@@ -253,6 +253,26 @@ requirements.txt          Pinned Python dependencies
 
 ---
 
+## Use as a skill
+
+`metacypher/skill.py` exposes a single callable — `text_to_cypher` — that
+chains the full pipeline in memory and returns a structured result dict.
+It is designed to be invoked by an LLM agent or a higher-level orchestrator
+without file I/O or command-line arguments.
+
+```python
+from skill import text_to_cypher
+
+result = text_to_cypher("Which paintings were created after 1880?", graph="art")
+print(result["cypher"])   # MATCH (p:Painting) WHERE p.creation_year > 1880 RETURN p.name
+```
+
+See **[SKILL.md](SKILL.md)** for the full API reference, prerequisites,
+environment-variable table, and honest limitations (catalog dependency,
+beam-search opt-in, supported graphs).
+
+---
+
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
