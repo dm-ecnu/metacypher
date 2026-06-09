@@ -8,7 +8,6 @@
 4. ✓ OPTIONAL MATCH扩展
 5. ✓ 智能评分机制（related nodes + prior score）
 
-作者: Claude & Wonyoung
 日期: 2025-12-31
 版本: 2.0 - Balanced Expansion
 

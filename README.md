@@ -9,9 +9,7 @@ analysis and entity linking, retrieves a compact set of relevant subgraph paths
 from an enriched schema catalog, ranks the resulting evidence with a
 ValidateRank-style scoring pass, synthesises a Cypher query with an
 OpenAI-compatible LLM, and then repairs the output using execution feedback and
-related-schema evidence. The full pipeline is described in the ICDE 2027 paper.
-
-**ICDE 2027** — code artifact for the paper submission.
+related-schema evidence.
 
 ---
 
