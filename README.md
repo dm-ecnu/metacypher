@@ -145,23 +145,22 @@ METACYPHER_DATA_DIR/
 
 ### Obtaining the benchmark data
 
-**CypherBench graphs and schemas:**
-<!-- TODO: confirm the canonical download URL for CypherBench once the dataset
-     page is publicly available. Likely https://github.com/megagonlabs/cypherbench
-     or the accompanying dataset release. Populate this section before public
-     release. -->
-> TODO: insert the confirmed CypherBench download URL here.
+**CypherBench graphs and schemas** — 11 Neo4j property graphs derived from
+Wikidata, released by Megagon Labs:
 
-After downloading, place the 11 graph Neo4j dump files (or point
-`METACYPHER_DATA_DIR` at the directory containing `schema/`) so that the
-layout above is satisfied. The Docker Compose file maps Neo4j bolt ports
-`15061`-`15071` (one per graph) using the `NEO4J_AUTH=neo4j/cypherbench`
-default.
+- Dataset: <https://huggingface.co/datasets/megagonlabs/cypherbench>
+- Code / graph-loading instructions: <https://github.com/megagonlabs/cypherbench>
 
-**MindtheQuery benchmark:**
-Sandbox schemas and the test-split question file go under
-`dataset/MindtheQuery/` and `schema/sandbox_schemas/` respectively. Obtain
-them from the original MindtheQuery benchmark release.
+Clone the Hugging Face dataset and load each graph into its Neo4j instance per
+the CypherBench instructions, then point `METACYPHER_DATA_DIR` at the directory
+holding `schema/`. The Docker Compose file maps Neo4j bolt ports `15060`-`15070`
+(one per graph, matching `metacypher/neo4j_client.py`) using the
+`NEO4J_AUTH=neo4j/cypherbench` default.
+
+**MindtheQuery sandbox set** — the additional sandbox-graph evaluation schemas
+and the test-split question file used in the paper go under
+`dataset/MindtheQuery/` and `schema/sandbox_schemas/` respectively. This set is
+released together with the paper/artifact.
 
 ---
 
@@ -250,20 +249,6 @@ Dockerfile                Lightweight image for the app container
 Makefile                  Convenience targets (see table above)
 requirements.txt          Pinned Python dependencies
 .env.example              Template for environment configuration
-```
-
----
-
-## Citation
-
-```bibtex
-@inproceedings{TODO-metacypher-icde2027,
-  title     = {TODO: Insert paper title},
-  author    = {TODO: Insert author list},
-  booktitle = {Proceedings of the IEEE International Conference on Data Engineering (ICDE)},
-  year      = {2027},
-  note      = {TODO: insert pages/doi once assigned}
-}
 ```
 
 ---
