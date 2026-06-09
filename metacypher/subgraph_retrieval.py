@@ -79,6 +79,22 @@ from beam_search import (             # noqa: F401
 
 from path_scorer import PathScorer    # noqa: F401
 
+# Optional ValidateRank integration — imported lazily so the module loads
+# even in environments where catalog hasn't been built yet.
+try:
+    from validate_rank import (        # noqa: F401
+        RankedCandidate,
+        phi_sparse,
+        pre_rank,
+        validate_rank,
+        is_eligible,
+        compile_count_probe,
+        select_structure,
+    )
+    _VALIDATE_RANK_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _VALIDATE_RANK_AVAILABLE = False
+
 
 # ============================================================================
 # 完整的子图检索器（集成所有组件）
@@ -91,7 +107,19 @@ class SubgraphRetriever:
     集成了平衡扩展方案的Beam Search
     """
 
-    def __init__(self, config: RetrievalConfig, schema: Dict, full_schema_path: str = ''):
+    def __init__(self, config: RetrievalConfig, schema: Dict, full_schema_path: str = '',
+                 catalog: Optional[Any] = None):
+        """
+        Parameters
+        ----------
+        config : RetrievalConfig
+        schema : dict
+        full_schema_path : str, optional
+        catalog : CatalogResult, optional
+            When provided, the PathScorer gains catalog-derived phi_sparse and
+            selectivity terms.  Also enables the validate_rank_candidates()
+            helper for structured online selection (requires a live count_fn).
+        """
         self.config = config
         self.schema = schema
         self.full_schema_path = full_schema_path
@@ -118,7 +146,9 @@ class SubgraphRetriever:
         else:
             self.embedder = None
 
-        self.scorer = PathScorer(config)
+        # Catalog is optional — PathScorer activates phi_sparse/selectivity when present
+        self.catalog = catalog
+        self.scorer = PathScorer(config, catalog=catalog)
 
         self.label_property_index = self._build_label_property_index()
 
@@ -126,11 +156,90 @@ class SubgraphRetriever:
         logger.info(f"  • Beam Search: {config.use_beam_search}")
         logger.info(f"  • 扩展策略: {'所有节点' if config.expand_from_all_nodes else '只端点'}")
         logger.info(f"  • 重复关系检测: {config.enable_repetition_detection}")
+        logger.info(f"  • Catalog (phi_sparse): {'enabled' if catalog else 'disabled'}")
         if self.full_schema:
             logger.info(f"  • 完整Schema: {len(self.full_schema.get('relations', []))} 个关系")
             logger.info(f"  • 关系模板: {len(self.relation_templates)} 个")
         else:
             logger.info(f"  • 简化Schema: {len(self.schema.get('relationships', []))} 个关系")
+
+    def validate_rank_candidates(
+        self,
+        candidate_sigs: List[Any],
+        count_fn: Callable[[str], int],
+        query_intents: Optional[Set[str]] = None,
+        query_role_tokens: Optional[List[str]] = None,
+        placed_anchors: Optional[Set[str]] = None,
+        placed_predicates: Optional[Set[str]] = None,
+        anchor_bindings: Optional[Dict[int, str]] = None,
+        predicate_clauses: Optional[List[str]] = None,
+        probe_cache: Optional[Dict[str, int]] = None,
+        beam_width: int = 10,
+        probe_budget: int = 20,
+    ) -> List[Any]:
+        """Online structure selection using ValidateRank (guarded, optional).
+
+        Runs PreRank + ValidateRank on a list of canonical path signatures
+        using the catalog attached at construction time.  Returns an empty
+        list and logs a warning when the catalog is absent or validate_rank
+        is not importable — callers must fall back to their existing scoring.
+
+        Parameters
+        ----------
+        candidate_sigs : list of MetaPathKey tuples (PathSig)
+        count_fn : callable (cypher: str) -> int
+            Live COUNT probe executor.
+        query_intents : set[str], optional
+        query_role_tokens : list[str], optional
+        placed_anchors : set[str], optional
+        placed_predicates : set[str], optional
+        anchor_bindings : dict[int, str], optional
+        predicate_clauses : list[str], optional
+        probe_cache : dict[str, int], optional
+            Shared memoisation dict; mutated in place.
+        beam_width : int
+        probe_budget : int
+
+        Returns
+        -------
+        list[RankedCandidate] — sorted descending by J.  Empty when catalog
+        or validate_rank is unavailable.
+        """
+        if not _VALIDATE_RANK_AVAILABLE:
+            logger.warning("[SubgraphRetriever] validate_rank not available; skipping")
+            return []
+        if self.catalog is None:
+            logger.warning("[SubgraphRetriever] No catalog attached; skipping validate_rank")
+            return []
+
+        # Phase 1: PreRank
+        pre_ranked = pre_rank(
+            candidate_sigs,
+            catalog=self.catalog,
+            query_intents=query_intents or set(),
+            probe_budget=probe_budget,
+            query_role_tokens=query_role_tokens or [],
+            placed_anchors=placed_anchors or set(),
+            placed_predicates=placed_predicates or set(),
+        )
+
+        # Phase 2: ValidateRank
+        ranked = validate_rank(
+            [rc.sig for rc in pre_ranked],
+            count_fn=count_fn,
+            catalog=self.catalog,
+            beam_width=beam_width,
+            probe_budget=probe_budget,
+            query_intents=query_intents or set(),
+            query_role_tokens=query_role_tokens or [],
+            placed_anchors=placed_anchors or set(),
+            placed_predicates=placed_predicates or set(),
+            anchor_bindings=anchor_bindings,
+            predicate_clauses=predicate_clauses,
+            probe_cache=probe_cache if probe_cache is not None else {},
+        )
+
+        return ranked
 
     def _load_relation_templates(self):
         """从full_schema中加载关系模板"""
