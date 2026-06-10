@@ -34,6 +34,11 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
+try:  # package-style import (pip install -e .)
+    from . import instrumentation as _instr
+except ImportError:  # flat import, run from inside the package dir
+    import instrumentation as _instr
+
 logger = logging.getLogger(__name__)
 
 
@@ -113,9 +118,10 @@ def text_to_cypher(
     analysis: Optional[Dict[str, Any]] = None
 
     try:
-        analysis, schema_compact, full_schema, full_schema_path = _stage1_analysis(
-            question, graph
-        )
+        with _instr.stage("analysis"):
+            analysis, schema_compact, full_schema, full_schema_path = _stage1_analysis(
+                question, graph
+            )
         result["analysis"] = analysis
     except Exception as exc:
         result["error"] = f"Stage 1 (analysis) failed: {exc}"
@@ -127,14 +133,15 @@ def text_to_cypher(
     # ------------------------------------------------------------------
     top_triples: List[Dict[str, Any]] = []
     try:
-        top_triples = _stage2_retrieval(
-            question=question,
-            graph=graph,
-            analysis=analysis,
-            full_schema=full_schema,
-            full_schema_path=full_schema_path,
-            top_k=top_k,
-        )
+        with _instr.stage("retrieval"):
+            top_triples = _stage2_retrieval(
+                question=question,
+                graph=graph,
+                analysis=analysis,
+                full_schema=full_schema,
+                full_schema_path=full_schema_path,
+                top_k=top_k,
+            )
     except Exception as exc:
         # Retrieval failure is non-fatal — we can still try generation with
         # an empty evidence list (quality will be lower).
@@ -146,12 +153,13 @@ def text_to_cypher(
     # ------------------------------------------------------------------
     cypher: Optional[str] = None
     try:
-        cypher = _stage3_generation(
-            question=question,
-            analysis=analysis,
-            top_triples=top_triples,
-            top_k=top_k,
-        )
+        with _instr.stage("generation"):
+            cypher = _stage3_generation(
+                question=question,
+                analysis=analysis,
+                top_triples=top_triples,
+                top_k=top_k,
+            )
         result["cypher"] = cypher
     except Exception as exc:
         result["error"] = (result["error"] or "") + f"; Stage 3 (generation) failed: {exc}"
@@ -163,12 +171,13 @@ def text_to_cypher(
     # ------------------------------------------------------------------
     if cypher and schema_compact is not None:
         try:
-            corrected = _stage4_correction(
-                question=question,
-                graph=graph,
-                cypher=cypher,
-                schema=schema_compact,
-            )
+            with _instr.stage("correction"):
+                corrected = _stage4_correction(
+                    question=question,
+                    graph=graph,
+                    cypher=cypher,
+                    schema=schema_compact,
+                )
             if corrected:
                 result["cypher"] = corrected
         except Exception as exc:
@@ -179,7 +188,8 @@ def text_to_cypher(
     # ------------------------------------------------------------------
     if execute and result["cypher"]:
         try:
-            result["rows"] = _execute_cypher(graph=graph, cypher=result["cypher"])
+            with _instr.stage("execution"):
+                result["rows"] = _execute_cypher(graph=graph, cypher=result["cypher"])
         except Exception as exc:
             result["error"] = (result["error"] or "") + f"; execution failed: {exc}"
             logger.warning("Neo4j execution failed: %s", exc)

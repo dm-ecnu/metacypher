@@ -1,6 +1,12 @@
 import json
+import time as _time
 from typing import List, Dict, Optional, Union, Literal, Sequence
 from openai import OpenAI
+
+try:  # package-style import (pip install -e .)
+    from . import instrumentation as _instr
+except ImportError:  # flat import, run from inside the package dir
+    import instrumentation as _instr
 
 
 class SimpleLLMClient:
@@ -116,12 +122,14 @@ class SimpleLLMClient:
         
         # 调用模型
         try:
+            _t0 = _time.perf_counter()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=temperature or self.temperature,
                 max_tokens=max_tokens or self.max_tokens
             )
+            _instr.record_llm_call(_time.perf_counter() - _t0)
             
             assistant_message = response.choices[0].message.content
             
@@ -259,12 +267,14 @@ class SimpleLLMClient:
                 if messages and messages[-1]["role"] == "user":
                     messages[-1]["content"] += "\n\nPlease respond in valid JSON format."
 
+            _t0 = _time.perf_counter()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=kwargs.get("temperature", self.temperature),
                 max_tokens=kwargs.get("max_tokens", self.max_tokens)
             )
+            _instr.record_llm_call(_time.perf_counter() - _t0)
 
             content = response.choices[0].message.content
             

@@ -10,7 +10,10 @@ results — do not hand-edit numbers.
   data from <https://huggingface.co/datasets/megagonlabs/cypherbench> and load
   per their instructions. Bolt ports follow `metacypher/neo4j_client.py`
   (CypherBench graphs on `15060`–`15070`).
-- An **OpenAI-compatible LLM endpoint** (e.g. a local vLLM server).
+- An **OpenAI-compatible LLM endpoint** — a local vLLM server, or the hosted
+  ECNU endpoint (verified working):
+  `METACYPHER_VLLM_BASE_URL=https://chat.ecnu.edu.cn/open/api/v1`,
+  `METACYPHER_VLLM_MODEL=ecnu-plus`, `METACYPHER_VLLM_API_KEY=<your key>`.
 - `pip install -r requirements.txt` (needs `networkx`, `neo4j`; the embedding
   stack is optional).
 
@@ -85,6 +88,31 @@ python all_subgraph_set.py                       # 2. retrieval (+catalog/Valida
 python generation.py --input <r.jsonl> --output <g.jsonl>   # 3. generation
 python correction.py --input_jsonl <g.jsonl> --output_jsonl <c.jsonl> --schema_jsonl <s.jsonl>
 ```
+
+### Measure latency / LLM calls / probe counts (efficiency table)
+
+The efficiency numbers must be measured, not estimated. Wrap each query with
+`instrumentation.track_query()` — LLM calls are timed automatically inside
+`SimpleLLMClient`, the four `skill.text_to_cypher` stages report their wall
+time, and COUNT probes are counted by wrapping the `count_fn`:
+
+```python
+from instrumentation import track_query, instrumented_count_fn
+from skill import text_to_cypher
+
+with track_query() as stats:
+    result = text_to_cypher(question, "geography", execute=True)
+print(stats.as_dict())
+# {"total_seconds": ..., "stage_seconds": {"analysis":..., "retrieval":...,
+#  "generation":..., "correction":..., "execution":...},
+#  "llm_calls": ..., "llm_seconds": ..., "probe_count": ..., "probe_seconds": ...}
+
+# For ValidateRank probes:
+ranked = retriever.validate_rank_candidates(candidate_sigs, instrumented_count_fn(count_fn))
+```
+
+Aggregate `as_dict()` rows per query into the per-dataset means/medians the
+efficiency table reports (`python3 test_instrumentation.py` covers the module).
 
 ## 4. Evaluate
 
