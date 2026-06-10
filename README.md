@@ -31,7 +31,7 @@ Verifies that config resolves and the core query-analysis logic works on a
 fresh checkout in under five seconds:
 
 ```bash
-cd metacypher && python ../examples/smoke_offline.py
+cd metacypher && python3 ../examples/smoke_offline.py
 ```
 
 Expected final line: `MetaCypher offline smoke: PASSED`
@@ -182,17 +182,17 @@ imports). End to end:
 cd metacypher
 
 # 1. Query analysis: entity extraction, schema mapping, pattern hypotheses
-python query_analyze.py
-QA_MODE=manual python query_analyze.py   # interactive single-question mode
+python3 query_analyze.py
+QA_MODE=manual python3 query_analyze.py   # interactive single-question mode
 
 # 2. Subgraph / path retrieval -> compact graph evidence
-python all_subgraph_set.py
+python3 all_subgraph_set.py
 
 # 3. Cypher generation from retrieved evidence
-python generation.py --input <retrieved.jsonl> --output <generated.jsonl>
+python3 generation.py --input <retrieved.jsonl> --output <generated.jsonl>
 
 # 4. Execution-guided correction
-python correction.py --input_jsonl <generated.jsonl> \
+python3 correction.py --input_jsonl <generated.jsonl> \
                      --output_jsonl <corrected.jsonl> \
                      --schema_jsonl <schema.jsonl>
 ```
@@ -201,7 +201,7 @@ Optional attribute-value search (requires the embedding stack and a prebuilt
 FAISS index):
 
 ```bash
-python search_entity.py -i <analysis.jsonl> -o <enriched.jsonl> -k 30
+python3 search_entity.py -i <analysis.jsonl> -o <enriched.jsonl> -k 30
 ```
 
 ---

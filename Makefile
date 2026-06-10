@@ -16,7 +16,7 @@ install:
 	pip install -r requirements.txt
 
 smoke:
-	cd metacypher && python ../examples/smoke_offline.py
+	cd metacypher && python3 ../examples/smoke_offline.py
 
 neo4j-up:
 	docker compose -f docker-compose.yml up -d
@@ -25,13 +25,13 @@ neo4j-down:
 	docker compose -f docker-compose.yml down
 
 analyze:
-	cd metacypher && python query_analyze.py $(ARGS)
+	cd metacypher && python3 query_analyze.py $(ARGS)
 
 retrieve:
-	cd metacypher && python all_subgraph_set.py $(ARGS)
+	cd metacypher && python3 all_subgraph_set.py $(ARGS)
 
 generate:
-	cd metacypher && python generation.py $(ARGS)
+	cd metacypher && python3 generation.py $(ARGS)
 
 correct:
-	cd metacypher && python correction.py $(ARGS)
+	cd metacypher && python3 correction.py $(ARGS)
