@@ -44,6 +44,9 @@ class QueryStats:
     llm_seconds: float = 0.0
     probe_count: int = 0
     probe_seconds: float = 0.0
+    prompt_count: int = 0
+    prompt_chars: int = 0
+    prompt_tokens_est: int = 0
     total_seconds: float = 0.0
 
     def as_dict(self) -> Dict[str, Any]:
@@ -54,6 +57,9 @@ class QueryStats:
             "llm_seconds": self.llm_seconds,
             "probe_count": self.probe_count,
             "probe_seconds": self.probe_seconds,
+            "prompt_count": self.prompt_count,
+            "prompt_chars": self.prompt_chars,
+            "prompt_tokens_est": self.prompt_tokens_est,
         }
 
 
@@ -95,6 +101,27 @@ def record_llm_call(seconds: float) -> None:
     if stats is not None:
         stats.llm_calls += 1
         stats.llm_seconds += seconds
+
+
+def estimate_tokens(text: str) -> int:
+    """Cheap model-free token estimate for prompt-size accounting.
+
+    max(word count, chars/4) tracks BPE token counts within ~15% for the
+    mixed English/Cypher prompts used here; good enough for the
+    EX-vs-context-length figure, which compares relative sizes.
+    """
+    if not text:
+        return 0
+    return max(len(text.split()), len(text) // 4)
+
+
+def record_prompt(chars: int, tokens_est: int) -> None:
+    """Called where a generation prompt is assembled (fig:context x-axis)."""
+    stats = current()
+    if stats is not None:
+        stats.prompt_count += 1
+        stats.prompt_chars += int(chars)
+        stats.prompt_tokens_est += int(tokens_est)
 
 
 def instrumented_count_fn(count_fn: Callable[[str], int]) -> Callable[[str], int]:

@@ -32,6 +32,13 @@ def _str_env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return val.strip().lower() in {"1", "true", "yes", "on"}
+
+
 # --------------------------------------------------------------------------
 # Data root
 # --------------------------------------------------------------------------
@@ -78,3 +85,18 @@ VLLM_API_KEY = _str_env("METACYPHER_VLLM_API_KEY", "EMPTY")
 NEO4J_HOST = _str_env("NEO4J_HOST", "localhost")
 NEO4J_USER = _str_env("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = _str_env("NEO4J_PASSWORD", "cypherbench")
+
+# --------------------------------------------------------------------------
+# Component ablation switches (tab:ablation_overall)
+# --------------------------------------------------------------------------
+# Both default OFF; the full system ignores them. The third ablation row
+# (execution pruning) needs no flag: run validate_rank with probe_budget=0.
+#
+# ABLATE_ADAPTIVE_EXPANSION — make candidate generation question-blind:
+#   neutralizes the question-derived prior/coverage scores and repetition
+#   awareness, leaving plain schema-valid expansion.
+# ABLATE_STRUCTURAL_CONTEXT — drop the selected meta-graph serialization
+#   (retrieved triples + sample paths) from the final generation prompt;
+#   the schema and the question are kept.
+ABLATE_ADAPTIVE_EXPANSION = _bool_env("METACYPHER_ABLATE_ADAPTIVE_EXPANSION", False)
+ABLATE_STRUCTURAL_CONTEXT = _bool_env("METACYPHER_ABLATE_STRUCTURAL_CONTEXT", False)

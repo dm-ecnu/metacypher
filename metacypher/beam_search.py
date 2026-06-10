@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from config import ABLATE_ADAPTIVE_EXPANSION
 from retrieval_config import RetrievalConfig
 from path_model import (
     PathInstance,
@@ -380,6 +381,8 @@ class BalancedCandidateGenerator:
 
     def _get_repeat_count(self, rel_type: str) -> int:
         """获取关系需要重复的次数"""
+        if ABLATE_ADAPTIVE_EXPANSION:
+            return 1
         for rep in self.repetitions:
             if rep.relation_type == rel_type:
                 return rep.min_count
@@ -397,26 +400,33 @@ class BalancedCandidateGenerator:
         is_repeated: bool,
         instance_id: int
     ) -> ExpansionCandidate:
-        prior_score = self._calculate_prior_score(target_label, is_repeated, path)
         description = self._generate_description(
             path=path, node_idx=node_idx, from_label=node_label,
             rel_type=rel_type, to_label=target_label, direction=direction,
             is_repeated=is_repeated, instance_id=instance_id
         )
 
-        related_schema = (self.question_analysis or {}).get('related_schema', {})
-        expected_nodes = {n.get('label') for n in path.nodes if n.get('label')}
-        expected_rels = {edge.get('rel_type') for edge in path.edges if edge.get('rel_type')}
-        if target_label:
-            expected_nodes.add(target_label)
-        if rel_type:
-            expected_rels.add(rel_type)
-        coverage_score = compute_related_schema_coverage(
-            expected_nodes, expected_rels, related_schema,
-            beta=self.config.coverage_beta,
-            use_length_gain=self.config.coverage_use_length_gain,
-            length_tau=self.config.coverage_length_tau
-        )
+        # Ablation (tab:ablation_overall, "w/o adaptive expansion"): expansion
+        # stays schema-valid but question-blind — the question-derived prior
+        # and related-schema coverage scores are neutralized to a constant.
+        if ABLATE_ADAPTIVE_EXPANSION:
+            prior_score = 0.0
+            coverage_score = 0.0
+        else:
+            prior_score = self._calculate_prior_score(target_label, is_repeated, path)
+            related_schema = (self.question_analysis or {}).get('related_schema', {})
+            expected_nodes = {n.get('label') for n in path.nodes if n.get('label')}
+            expected_rels = {edge.get('rel_type') for edge in path.edges if edge.get('rel_type')}
+            if target_label:
+                expected_nodes.add(target_label)
+            if rel_type:
+                expected_rels.add(rel_type)
+            coverage_score = compute_related_schema_coverage(
+                expected_nodes, expected_rels, related_schema,
+                beta=self.config.coverage_beta,
+                use_length_gain=self.config.coverage_use_length_gain,
+                length_tau=self.config.coverage_length_tau
+            )
 
         constraint = None
         if is_repeated and instance_id > 0:

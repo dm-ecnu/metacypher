@@ -122,6 +122,47 @@ in the paper** — they replace any previously hand-set values.
 
 ## 5. Ablations
 
+### Beam-width sweep (fig:param_analysis)
+
 `metacypher/ablation/` has the beam-width sweep machinery
 (`run_ablation.py`, `verify_results.py`). Run `ablation/preflight.py` first to
 check Neo4j/LLM/data, then the sweep. Report the raw measured curve (no offsets).
+
+### Component ablation (tab:ablation_overall)
+
+Three rows, each toggled without code edits:
+
+```bash
+# w/o adaptive expansion — question-blind, schema-valid candidate generation
+METACYPHER_ABLATE_ADAPTIVE_EXPANSION=true python all_subgraph_set.py ...
+
+# w/o structural context — drop the meta-graph from the generation prompt
+METACYPHER_ABLATE_STRUCTURAL_CONTEXT=true python generation.py ...
+
+# w/o execution pruning — no COUNT-probe filter: call validate_rank(..., probe_budget=0)
+```
+
+### Mechanism diagnostics (tab:mechanism, fig:error_attr)
+
+`metacypher/diagnostics.py` computes the diagnostics table and the
+hallucination-attribution figure from gold/predicted Cypher + the schema:
+
+```python
+from diagnostics import mechanism_diagnostics, hallucination_attribution
+
+# Per-class structural-hallucination rates + no-hallucination share (fig:error_attr)
+attr = hallucination_attribution(predicted_cyphers, schema)   # parses each query vs schema
+
+# Full tab:mechanism block (any input may be omitted → that cell is None)
+block = mechanism_diagnostics(
+    schema, predicted_cyphers,
+    beams=per_q_beam_sigs, golds=per_q_gold_sigs, beam_width=5,   # gold meta-path recall@5
+    probe_results=ranked_candidates,                              # probe precision (uses .n_hat)
+    ex_records=[EXRecord(gold_empty=..., correct=...) for ...],   # empty-result query EX
+)
+```
+
+The structural checks (phantom node/relation/attribute, invalid connectivity)
+use a stdlib regex parser — no external Cypher parser. `python3
+test_diagnostics.py` covers all metrics. The paper audits these
+script-derived labels manually on representative groups.

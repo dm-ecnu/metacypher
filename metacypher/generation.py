@@ -26,7 +26,11 @@ import sys
 
 # 导入LLM client
 from llm_client import SimpleLLMClient
-from config import VLLM_BASE_URL, VLLM_MODEL
+from config import VLLM_BASE_URL, VLLM_MODEL, ABLATE_STRUCTURAL_CONTEXT
+try:  # package-style import (pip install -e .)
+    from . import instrumentation as _instr
+except ImportError:  # flat import, run from inside the package dir
+    import instrumentation as _instr
 
 
 class CypherGenerator:
@@ -204,14 +208,18 @@ RETURN n.name
     ) -> str:
         """构建完整的生成prompt"""
         parts = []
-        
+
         # 1. Schema信息
         parts.append(self._format_schema_for_prompt(schema))
         parts.append("")
-        
-        # 2. 检索到的三元组
-        parts.append(self._format_triples_for_prompt(triples))
-        parts.append("")
+
+        # 2. 检索到的三元组 — the "structural context" of tab:ablation_overall:
+        #    the selected meta-graph serialized for the final LLM call. Under
+        #    METACYPHER_ABLATE_STRUCTURAL_CONTEXT it is omitted (schema and
+        #    question are kept).
+        if not ABLATE_STRUCTURAL_CONTEXT:
+            parts.append(self._format_triples_for_prompt(triples))
+            parts.append("")
         
         # 3. 用户问题
         parts.append("## User Question")
@@ -242,7 +250,16 @@ RETURN n.name
         
         # 构建prompt
         user_prompt = self._build_generation_prompt(question, schema, triples)
-        
+
+        # fig:context — record the generation-context length per query (both in
+        # the active instrumentation collector and on the item itself, so the
+        # output rows carry the x-axis of the EX-vs-context-length figure).
+        prompt_chars = len(self.system_prompt) + len(user_prompt)
+        prompt_tokens_est = _instr.estimate_tokens(self.system_prompt) + _instr.estimate_tokens(user_prompt)
+        _instr.record_prompt(prompt_chars, prompt_tokens_est)
+        item['_generation_prompt_chars'] = prompt_chars
+        item['_generation_prompt_tokens_est'] = prompt_tokens_est
+
         # 调用LLM生成
         try:
             cypher_query = self.llm_client.generate(
@@ -323,7 +340,9 @@ RETURN n.name
                         'qid': item['qid'],
                         'graph': item['graph'],
                         'question': item['nl_question'],
-                        'generated_cypher': cypher_query
+                        'generated_cypher': cypher_query,
+                        'generation_prompt_chars': item.get('_generation_prompt_chars'),
+                        'generation_prompt_tokens_est': item.get('_generation_prompt_tokens_est')
                     }
                     
                     # 写入文件

@@ -54,8 +54,29 @@ class TrackQueryTest(unittest.TestCase):
         d = stats.as_dict()
         self.assertEqual(
             set(d),
-            {"total_seconds", "stage_seconds", "llm_calls", "llm_seconds", "probe_count", "probe_seconds"},
+            {
+                "total_seconds", "stage_seconds", "llm_calls", "llm_seconds",
+                "probe_count", "probe_seconds", "prompt_count", "prompt_chars",
+                "prompt_tokens_est",
+            },
         )
+
+
+class PromptRecordingTest(unittest.TestCase):
+    def test_estimate_tokens(self):
+        self.assertEqual(instr.estimate_tokens(""), 0)
+        self.assertGreater(instr.estimate_tokens("MATCH (n) RETURN n"), 0)
+
+    def test_record_prompt_accumulates(self):
+        with instr.track_query() as stats:
+            instr.record_prompt(100, 25)
+            instr.record_prompt(40, 10)
+        self.assertEqual(stats.prompt_count, 2)
+        self.assertEqual(stats.prompt_chars, 140)
+        self.assertEqual(stats.prompt_tokens_est, 35)
+
+    def test_record_prompt_no_collector(self):
+        instr.record_prompt(10, 3)  # must be a no-op
 
 
 class CountFnTest(unittest.TestCase):
