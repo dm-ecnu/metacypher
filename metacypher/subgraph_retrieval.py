@@ -1,4 +1,14 @@
 """
+Online structure-retrieval stage (paper "ValidateRank: Online Structure
+Selection", sec:online).
+
+Aggregator/orchestrator for the per-question structure-selection pass that precedes
+Cypher generation: it retrieves a schema-grounded meta-graph (M*) via beam search
+over typed candidate paths, then hands M* to the generator. The catalog-driven
+PreRank/ValidateRank COUNT-probe path (catalog.py + validate_rank.py) is opt-in and
+plugged in through PathScorer(catalog=); the default path here scores semantically
+without bounded probes. Concrete components are re-exported from the sub-modules below.
+
 子图检索系统 - 集成平衡扩展方案
 
 完整功能:

@@ -1,10 +1,19 @@
 """
-Beam-search pipeline components for subgraph retrieval.
+Online beam search over partial typed structures (paper Algorithm "SelectStructure"
+loop, sec:online / "Search State and Catalog-Driven Expansion").
 
-Extracted from subgraph_retrieval.py:
+This is the production candidate-expansion + beam path of MetaCypher's online stage:
+SemanticGuidedBeamSearch drives the per-layer expand->score->select loop, and
+BalancedCandidateGenerator implements the question-guided "adaptive expansion"
+ablated by tab:ablation_overall (METACYPHER_ABLATE_ADAPTIVE_EXPANSION makes
+expansion question-blind). NOTE: this default path scores with PathScorer and does
+not call validate_rank; the catalog-driven PreRank/ValidateRank probing (Alg 3) is
+the opt-in path wired via PathScorer(catalog=) and validate_rank.py.
+
+Components (extracted from subgraph_retrieval.py):
   - BGEEmbedder          — BGE-M3 encoder wrapper
-  - RepetitionDetector   — detects repeated-relation requirements
-  - BalancedCandidateGenerator — open-ended expansion candidate generation
+  - RepetitionDetector   — detects repeated-relation requirements (self-joins)
+  - BalancedCandidateGenerator — question-guided candidate expansion (adaptive expansion)
   - SemanticFilter       — semantic + prior-score ranking
   - OptionalMatchExecutor — executes OPTIONAL MATCH expansions
   - SemanticGuidedBeamSearch — top-level beam-search orchestrator

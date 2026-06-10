@@ -1,3 +1,15 @@
+"""
+Post-generation schema-aware Cypher repair (pipeline stage 4, not a paper mechanism).
+
+This is a downstream realization helper, NOT MetaCypher's contribution: it runs an
+LLM repair prompt over an already-generated query plus deterministic enforcement
+rules (DISTINCT-by-node, ABS-for-difference). MetaCypher's claim is the opposite of
+post-hoc repair -- ValidateRank (sec:online) grounds structure BEFORE generation -- so
+the paper positions execution-feedback / post-generation correction as the *baseline*
+paradigm (experiment.tex baselines). This module exists so the end-to-end pipeline
+emits runnable Cypher; it does not implement an offline-catalog or ValidateRank claim.
+"""
+
 import argparse
 import json
 import os

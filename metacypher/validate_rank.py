@@ -1,7 +1,8 @@
 """
 validate_rank.py — Online ranking algorithms for MetaCypher (Algorithm 2 & 3).
 
-Implements the two-phase ValidateRank pipeline from §4 of the paper:
+Implements the two-phase ValidateRank pipeline from the online structure-selection
+section (sec:online) of the paper:
 
   PreRank(candidates, catalog, query_intents, probe_budget)
       → sorted list of (candidate, pre_score) keeping only top-P canonical sigs
@@ -22,7 +23,7 @@ Implements the two-phase ValidateRank pipeline from §4 of the paper:
 
 Paper reference
 ---------------
-  Eq.2 (§4.3):
+  Eq.2 (eq:score, "Cardinality-Guided Validation and Stopping"):
     J(s) = phi_desc(s) + phi_cov(s) + lambda * phi_struct(s)
            - lambda_miss * phi_miss(s) - lambda_sparse * phi_sparse(s)
 
@@ -74,7 +75,7 @@ IntentSet = Set[str]
 
 
 # ---------------------------------------------------------------------------
-# Default scoring coefficients (paper §4.3, fixed on a validation split)
+# Default scoring coefficients (paper eq:score footnote, fixed on a validation split)
 # ---------------------------------------------------------------------------
 LAMBDA_STRUCT: float = 0.20    # binding-continuity reward
 LAMBDA_MISS: float = 0.30      # missing-intent penalty
@@ -257,7 +258,8 @@ def is_eligible(
     required_predicates: Set[str],
     n_hat: float = 0.0,
 ) -> Tuple[bool, List[str]]:
-    """Eligibility (stopping) condition from §4.3 of the paper.
+    """Eligibility (stopping) condition from the paper's "Stop condition"
+    paragraph (subsec:termination).
 
     A state is eligible only if its meta-graph:
       1. covers Ω(Q) — all required intent tokens (node labels / role tokens)
@@ -415,7 +417,7 @@ def pre_rank(
     Reads catalog entries for each candidate, computes semantic and coverage
     features, and returns the best ``probe_budget`` canonical signatures for
     probing.  Zero-support candidates are NOT removed (paper §4.2: "zero and
-    weak support enter as penalties, not hard filters").
+    weak support enter as penalties, not hard filters" — PreRank discipline).
 
     Parameters
     ----------

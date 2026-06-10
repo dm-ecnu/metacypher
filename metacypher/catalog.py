@@ -65,7 +65,8 @@ SchemaDict = Dict[str, Any]   # same shape as compact_schema_for_prompt output
 class CatalogEntry:
     """One row in the cardinality catalog.
 
-    Mirrors Table 1 and the CatalogEntry definition in method.tex §2.
+    Mirrors the CatalogEntry definition in method.tex (subsec:prelim) and
+    Fig. fig:offline.
 
     Attributes
     ----------
@@ -434,7 +435,8 @@ def _role_description(key: MetaPathKey) -> str:
 
     Uses relation token notation directly, e.g.
       "River -[FLOWS_THROUGH]-> Country <-[LOCATE_IN]- Lake"
-    This is the phi_desc(p) field from the paper's §2.4.
+    This is the phi_desc(p) field (paper "Descriptions, grounding, and update
+    locality", subsubsec:descriptions).
     """
     parts: List[str] = []
     node_labels = [key[i] for i in range(0, len(key), 2)]
@@ -548,7 +550,8 @@ def build_catalog(
 ) -> CatalogResult:
     """Build the offline cardinality catalog.
 
-    Implements Algorithm 1 from §3.2 of the paper.
+    Implements Algorithm 1 (alg:profiling) from the offline-catalog section
+    (sec:offline) of the paper.
 
     Parameters
     ----------

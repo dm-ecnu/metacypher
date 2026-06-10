@@ -1,6 +1,11 @@
 """
 metacypher.skill — high-level entry point for the MetaCypher pipeline.
 
+Implements the end-to-end task pipeline of the paper (Eq.1, eq:task):
+Q -> structure retrieval (M*) -> Cypher generation (Y), chaining query analysis,
+online structure retrieval (sec:online), generation (subsec:generation), and
+post-hoc repair.
+
 Exposes a single callable:
 
     text_to_cypher(question, graph, *, execute=False, top_k=5) -> dict

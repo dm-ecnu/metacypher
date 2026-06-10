@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 """
+Meta-graph -> Cypher surface realization (paper "From Meta-Graph to Cypher",
+subsec:generation).
+
+Implements the generation stage F(Q, M*): the selected meta-graph is serialized
+into the LLM prompt as the structural context (the retrieved typed nodes/relations
++ sample paths), and the LLM realizes projection, aggregation, ordering, and syntax.
+The structural-context block is the lever ablated by tab:ablation_overall
+("w/o structural context", METACYPHER_ABLATE_STRUCTURAL_CONTEXT).
+
 从子图检索结果生成Cypher查询
 
 功能:
