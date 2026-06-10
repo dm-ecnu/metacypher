@@ -42,6 +42,17 @@ Or via Make:
 make smoke
 ```
 
+### Deployment tiers
+
+| Tier | What runs | Needs |
+|---|---|---|
+| **T0 — offline smoke** | config resolution + core query-analysis logic | nothing (fresh clone) |
+| **T1 — full pipeline** | analyze → retrieve → generate → correct, real EX | `requirements.txt`, CypherBench Neo4j graphs, an OpenAI-compatible LLM endpoint (a local vLLM **or** the hosted ECNU endpoint — see `.env.example`) |
+
+`METHOD_MAP.md` maps each paper concept (section / algorithm / equation) to its
+code location, including an honest note that the catalog/ValidateRank wiring is
+opt-in. `EXPERIMENTS.md` is the runbook for producing measured numbers.
+
 ### Full pipeline quick start
 
 ```bash
