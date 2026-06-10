@@ -1,7 +1,7 @@
 # MetaCypher
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/junjie-yao/metacypher/ci.yml?label=offline-smoke)](https://github.com/junjie-yao/metacypher/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/dm-ecnu/metacypher/ci.yml?label=offline-smoke)](https://github.com/dm-ecnu/metacypher/actions/workflows/ci.yml)
 
 MetaCypher is a catalog-grounded Text-to-Cypher system for property-graph
 databases. Given a natural-language question, it performs schema-aware query
