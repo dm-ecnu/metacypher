@@ -173,6 +173,24 @@ released together with the paper/artifact.
 
 ---
 
+## Datasets & baselines
+
+The two benchmarks and every compared system are documented with their official
+names, sources, configurations, and citation keys:
+
+- **[DATASETS.md](DATASETS.md)** — CypherBench (`feng2025cypherbench`, 11
+  Wikidata-derived property graphs) and Mind the Query / MTQ
+  (`chauhan-etal-2025-mind`, 11 Neo4j production databases): one-line
+  descriptions, how to obtain (URLs), splits used, and known licenses.
+- **[BASELINES.md](BASELINES.md)** — a table of every compared system (SFT,
+  SchemaFilter, MAC, MAGIC, R³-NL2GQL, ChattyKG, UniQGen, FINER-SQL), the exact
+  configuration MetaCypher compares against, plus the `bge-m3` embedding model
+  and the LLM backbones.
+- **[CITATIONS.bib](CITATIONS.bib)** — the real BibTeX entries for every key
+  above, copied verbatim from the paper's `.bib` sources.
+
+---
+
 ## Running the pipeline
 
 Run the modules from inside the `metacypher/` directory (they use flat
