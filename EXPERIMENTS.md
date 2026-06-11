@@ -168,9 +168,9 @@ catalog; the EX/PSJS gap is the per-query-counting row. `python3
 test_per_query_counting.py` covers budget enforcement, per-query reset, and
 card/sel parity with `build_catalog` (16 tests).
 
-**Measured (2026-06-11, CypherBench 7 test graphs, Qwen2.5-Coder-14B, n=2,249
-paired):** accuracy parity — EX 0.3677 (catalog) vs 0.3691 (perquery), PSJS
-0.6395 vs 0.6425. The difference is cost: per-query counting reaches
+**Measured (2026-06-11, CypherBench 7 test graphs, Qwen2.5-Coder-14B, full
+test set n=2,348 paired):** accuracy parity — EX 0.3624 (catalog) vs 0.3620
+(perquery), PSJS 0.6366 vs 0.6385. The difference is cost: per-query counting reaches
 183–316 s mean / 650–822 s p90 per question on the million-edge graphs with
 the 20-probe budget exhausted (median 19/20), while the catalog arm stays at
 a 12–27 s median on every graph; one-time builds ranged 8 s–1.9 h per schema.
