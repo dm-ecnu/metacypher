@@ -176,6 +176,27 @@ the 20-probe budget exhausted (median 19/20), while the catalog arm stays at
 a 12–27 s median on every graph; one-time builds ranged 8 s–1.9 h per schema.
 Full provenance: the paper repo's `experiment-result/rq4-perquery-counting.md`.
 
+Independent replication (2026-06-11, same 7 graphs, **ECNU `ecnu-plus`**,
+n=100/graph = 700/config, full pipeline incl. correction): accuracy parity —
+EX 0.517 (catalog) vs 0.521 (perquery), PSJS 0.729 vs 0.728 (gap within noise);
+per-query online cost a mean of 16.7 joint-support `COUNT` probes/question
+(max 56 on relation-dense graphs) vs the catalog's 0. Same conclusion: parity,
+cost is the difference. (Absolute EX lower than the Qwen run above — model
+differs.)
+
+**End-to-end driver (this repo).** `run_per_query_vs_catalog.py` runs the whole
+question→Cypher pipeline under either arm and records probe stats:
+`--config {catalog,per_query}` (per-query takes `--probe-budget`),
+`--n-per-graph`, `--narrow` (pattern-only retrieval vs the default beam config),
+`--no-correction`, `--retrieval-only` (record probe cost without
+generation/correction). `build_all_catalogs.py` materializes `catalog_<graph>.json`
+per graph; `eval_ex_psjs.py` scores outputs with the CypherBench evaluator
+(EX + PSJS, needs live Neo4j). Set `METACYPHER_CATALOG_PROBE_CAP` (e.g. `10000000`)
+to bound joint-support `COUNT` probes so hub self-join patterns (path-instance
+count quadratic in a hub's fan-out, e.g. `(:Lake)->(:Country)<-(:Lake)`)
+terminate in ~1 s instead of >19 min; default `0` = unbounded (offline tests
+stay byte-exact).
+
 ### Mechanism diagnostics (tab:mechanism, fig:error_attr)
 
 `metacypher/diagnostics.py` computes the diagnostics table and the

@@ -29,9 +29,10 @@ class EnhancedSubgraphRetriever(BaseSubgraphRetriever):
         schema: Dict[str, Any],
         full_schema_path: str = "",
         enable_semantics: bool = False,
-        template_base_path: str = ""
+        template_base_path: str = "",
+        catalog: Any = None
     ):
-        super().__init__(config, schema, full_schema_path)
+        super().__init__(config, schema, full_schema_path, catalog=catalog)
         self.enable_semantics = enable_semantics
         self.template_base_path = template_base_path
         self._current_graph_name: str = ""

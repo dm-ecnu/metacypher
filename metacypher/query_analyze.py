@@ -8,6 +8,7 @@ from config import (
     DATASET_DIR,
     SANDBOX_SCHEMA_DIR,
     SUBGRAPH_DIR,
+    VLLM_API_KEY,
     VLLM_BASE_URL,
     VLLM_MODEL,
 )
@@ -31,7 +32,7 @@ PROMPT_VERSION = "qa_schema_v2"
 # VLLM_BASE_URL / VLLM_MODEL come from config (env-overridable).
 # IMPORTANT: VLLM_MODEL must match the model name exposed by your vLLM server (see /v1/models)
 # Safer default output length for JSON analysis
-VLLM_MAX_TOKENS = 2048
+VLLM_MAX_TOKENS = 4096
 # Lower temperature to reduce formatting drift
 VLLM_TEMPERATURE = 0.0
 
@@ -430,7 +431,7 @@ def call_llm(prompt: str) -> str:
             provider="vllm",
             model=VLLM_MODEL,
             base_url=VLLM_BASE_URL,
-            api_key="",
+            api_key=VLLM_API_KEY,
             temperature=VLLM_TEMPERATURE,
             max_tokens=VLLM_MAX_TOKENS,
             enable_memory=False,

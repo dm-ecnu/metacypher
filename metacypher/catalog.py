@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import statistics
 from dataclasses import dataclass, field, asdict
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
@@ -343,6 +344,17 @@ def _compile_count_query(key: MetaPathKey) -> str:
                 rel_label = tok[:-1]
                 parts.append(f"-[r{i}:{rel_label}]-")
     match_clause = "".join(parts)
+    # Bounded COUNT probe: when METACYPHER_CATALOG_PROBE_CAP>0, cap the joint
+    # support at CAP so the probe returns min(true_count, CAP) and terminates
+    # quickly on hub/self-join patterns whose full path-instance count is
+    # quadratic in a hub's fan-out (e.g. (:Lake)->(:Country)<-(:Lake) on a
+    # geography graph would otherwise count billions of pairs). The cap only
+    # bites on patterns whose true count exceeds CAP — those are already
+    # maximal-support, so the scorer's ranking signal is preserved. Default 0
+    # = unbounded (original count(*) behavior; keeps offline tests byte-exact).
+    cap = int(os.environ.get("METACYPHER_CATALOG_PROBE_CAP", "0") or "0")
+    if cap > 0:
+        return f"MATCH {match_clause} WITH 1 AS _x LIMIT {cap} RETURN count(_x) AS c"
     return f"MATCH {match_clause} RETURN count(*) AS c"
 
 
