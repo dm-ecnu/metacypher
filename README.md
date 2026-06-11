@@ -300,6 +300,14 @@ beam-search opt-in, supported graphs).
 
 ---
 
+## Contact
+
+MetaCypher is maintained by the ECNU Data Management Group (DM Group), Software
+Engineering Institute, East China Normal University.
+
+For questions, issues, or collaboration, contact Junjie Yao at
+<junjie.yao@sei.encu.edu.cn>.
+
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
