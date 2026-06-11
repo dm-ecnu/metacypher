@@ -142,6 +142,32 @@ METACYPHER_ABLATE_STRUCTURAL_CONTEXT=true python generation.py ...
 # w/o execution pruning — no COUNT-probe filter: call validate_rank(..., probe_budget=0)
 ```
 
+### Joint catalog versus per-query counting (the defining design choice)
+
+`metacypher/per_query_counting.py` isolates offline amortization itself:
+`PerQueryCountingCatalog` is a drop-in for `CatalogResult` that keeps the
+scorer (phi_sparse + selectivity) and the COUNT primitive identical, but
+measures joint support **at lookup time, under a per-query probe budget, with
+nothing reused across queries**. Set the budget to MetaCypher's own online
+probe count (20, per the efficiency table) for the equal-budget comparison:
+
+```python
+from per_query_counting import PerQueryCountingCatalog
+from subgraph_retrieval import SubgraphRetriever, RetrievalConfig
+
+pqc = PerQueryCountingCatalog(schema, count_fn, probe_budget=20)
+retriever = SubgraphRetriever(RetrievalConfig(), schema, catalog=pqc)
+for q in questions:
+    pqc.start_query()                 # discard all measured support
+    ...run retrieval/generation for q...
+    print(pqc.query_stats())          # probes spent, lookups over budget
+```
+
+Run the full pipeline once with this retriever and once with the offline
+catalog; the EX/PSJS gap is the per-query-counting row. `python3
+test_per_query_counting.py` covers budget enforcement, per-query reset, and
+card/sel parity with `build_catalog` (16 tests).
+
 ### Mechanism diagnostics (tab:mechanism, fig:error_attr)
 
 `metacypher/diagnostics.py` computes the diagnostics table and the
