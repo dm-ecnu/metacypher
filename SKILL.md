@@ -40,7 +40,7 @@ Do NOT use this skill when:
 
    **Pointing this skill at an arbitrary new Neo4j instance without building the catalog
    first will fail at Stage 2 (retrieval).**  Building the catalog is a one-time,
-   dataset-specific step described in the paper artifact's README.
+   dataset-specific step described in the benchmark setup artifact's README.
 
 2. **Running Neo4j instances.**  Each graph runs as a separate Neo4j instance on a
    dedicated Bolt port (15060–15070 for CypherBench; 15091–15100 for sandbox graphs).
@@ -134,7 +134,7 @@ the skill returns a partial result with an `error` field rather than raising.
   auto-discover or build the catalog.
 - **Beam search disabled**: The skill disables the BGE-M3 embedding-based beam
   search by default to avoid requiring `sentence-transformers`/`faiss`/`torch`.
-  Pattern-only retrieval is used.  For best accuracy (matching the paper's
+  Pattern-only retrieval is used.  For best accuracy (matching the benchmark setup's
   reported numbers) run the full batch pipeline with beam search enabled.
 - **Single LLM endpoint**: All three LLM calls (analysis, generation, correction)
   share the same `METACYPHER_VLLM_BASE_URL` / `METACYPHER_VLLM_MODEL` endpoint.

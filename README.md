@@ -17,7 +17,7 @@ related-schema evidence.
 
 ![MetaCypher framework](docs/framework.png)
 
-`docs/framework.pdf` is the vector copy used in the paper. The pipeline stages
+`docs/framework.pdf` is the vector copy for high-resolution viewing. The pipeline stages
 correspond directly to the executable modules described in
 [Running the pipeline](#running-the-pipeline).
 
@@ -49,9 +49,7 @@ make smoke
 | **T0 — offline smoke** | config resolution + core query-analysis logic | nothing (fresh clone) |
 | **T1 — full pipeline** | analyze → retrieve → generate → correct, real EX | `requirements.txt`, CypherBench Neo4j graphs, an OpenAI-compatible LLM endpoint (a local vLLM **or** the hosted ECNU endpoint — see `.env.example`) |
 
-`METHOD_MAP.md` maps each paper concept (section / algorithm / equation) to its
-code location, including an honest note that the catalog/ValidateRank wiring is
-opt-in. `EXPERIMENTS.md` is the runbook for producing measured numbers.
+`METHOD_MAP.md` maps method concepts to code locations and notes which components are opt-in. `EXPERIMENTS.md` is the runbook for producing measured numbers.
 
 ### Full pipeline quick start
 
@@ -167,9 +165,9 @@ holding `schema/`. The Docker Compose file maps Neo4j bolt ports `15060`-`15070`
 `NEO4J_AUTH=neo4j/cypherbench` default.
 
 **MindtheQuery sandbox set** — the additional sandbox-graph evaluation schemas
-and the test-split question file used in the paper go under
+and the test-split question file used by the evaluation setup go under
 `dataset/MindtheQuery/` and `schema/sandbox_schemas/` respectively. This set is
-released together with the paper/artifact.
+provided separately with the evaluation materials.
 
 ---
 
@@ -187,7 +185,7 @@ names, sources, configurations, and citation keys:
   configuration MetaCypher compares against, plus the `bge-m3` embedding model
   and the LLM backbones.
 - **[CITATIONS.bib](CITATIONS.bib)** — the real BibTeX entries for every key
-  above, copied verbatim from the paper's `.bib` sources.
+  above, collected from the cited source bibliography.
 
 ---
 
@@ -224,7 +222,7 @@ python3 search_entity.py -i <analysis.jsonl> -o <enriched.jsonl> -k 30
 
 ---
 
-## Reproducing paper results
+## Reproducing benchmark results
 
 The following numbered steps map to the pipeline stages above and to the
 ablation scripts in `metacypher/ablation/`:

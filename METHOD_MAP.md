@@ -1,24 +1,19 @@
-# MetaCypher: Paper → Code Map
+# MetaCypher: Method-to-Code Map
 
-This document maps the mechanism and experiment claims of the MetaCypher paper
-(`cypher-icde/sections/{method,prelim,experiment}.tex`) to the implementing code
-in `metacypher/`. Paper references use the LaTeX `\label` names (and the local
-algorithm/equation numbers `Algorithm 1/2/3`, `Eq.1 = eq:task`, `Eq.2 = eq:score`)
-rather than absolute section numbers, because section numbers shift as the paper
-is reorganized.
+This document maps MetaCypher method concepts and evaluation metrics to their implementing code in `metacypher/`. References use stable concept names rather than draft-specific section numbers.
 
 Every `file:symbol` below was verified against the code with grep/read.
 
 ## Core data object
 
-| Paper concept (ref) | Code location | Note |
+| Method concept | Code location | Note |
 | --- | --- | --- |
 | Property graph + schema `S=(T_V,T_E,A)`; query signature `σ(Q)` (def:signature) | `metacypher/query_analyze.py:build_prompt`, `compact_schema_for_prompt`, `call_llm`, `supplement_entity_mappings` | First LLM call extracts `σ(Q)` (anchors, attr predicates, target roles); fields are schema-checked downstream. |
 | Cardinality catalog `C` / `CatalogEntry(p)` (subsec:prelim, fig:offline) | `metacypher/catalog.py:CatalogEntry`, `CatalogResult` | Dataclass with fields `key/card/deg/sel/role_description/anchor_fields`; `CatalogResult.median_card` = `μ_P`. |
 
 ## Offline: catalog construction (Algorithm 1, alg:profiling, sec:offline)
 
-| Paper concept (ref) | Code location | Note |
+| Method concept | Code location | Note |
 | --- | --- | --- |
 | `EnumMetaPaths(S,L)` — schema-bounded meta-path enumeration up to length L (def:metapath) | `metacypher/catalog.py:enum_meta_paths` | DFS over schema multigraph following out/in relation triples; canonical typed-path key. |
 | `BuildAnchorIndex` — anchor/attribute grounding fields | `metacypher/catalog.py:_build_anchor_index`, `_compatible_anchor_fields` | Per-label property + numeric-property index for hosting comparison predicates. |
@@ -32,7 +27,7 @@ Every `file:symbol` below was verified against the code with grep/read.
 
 ## Online: ValidateRank structure selection (Algorithm 2/3, alg:search/alg:validaterank, sec:online)
 
-| Paper concept (ref) | Code location | Note |
+| Method concept | Code location | Note |
 | --- | --- | --- |
 | `SelectStructure` outer beam loop (Algorithm 2) | `metacypher/validate_rank.py:select_structure` | Per-layer PreRank → ValidateRank → top-B select → stopping check. Convenience driver (candidate pool injected). |
 | Catalog-driven candidate expansion / adaptive expansion (frontier ext., role connection, predicate hosting) | `metacypher/beam_search.py:BalancedCandidateGenerator`, `SemanticGuidedBeamSearch` | Production expansion path; question-guided. This is the ablation target "adaptive expansion". |
@@ -46,16 +41,16 @@ Every `file:symbol` below was verified against the code with grep/read.
 
 ## Meta-graph → Cypher generation and repair
 
-| Paper concept (ref) | Code location | Note |
+| Method concept | Code location | Note |
 | --- | --- | --- |
 | Surface realization `Y = F(Q, M*)` (subsec:generation) | `metacypher/generation.py:CypherGenerator._build_generation_prompt`, `generate_cypher` | Serializes selected meta-graph as structural context; LLM realizes projection/aggregation/syntax. |
-| Post-generation repair (paper's *baseline* paradigm, not a MetaCypher mechanism) | `metacypher/correction.py:CypherRepairer`, `enforce_distinct_by_node`, `enforce_no_abs_for_difference_questions` | LLM repair + deterministic enforcement. Pipeline plumbing only — MetaCypher's thesis is validate-before-generate, the opposite of post-hoc repair. |
+| Post-generation repair (method's *baseline* paradigm, not a MetaCypher mechanism) | `metacypher/correction.py:CypherRepairer`, `enforce_distinct_by_node`, `enforce_no_abs_for_difference_questions` | LLM repair + deterministic enforcement. Pipeline plumbing only — MetaCypher's thesis is validate-before-generate, the opposite of post-hoc repair. |
 | End-to-end pipeline `Q → M* → Y` (Eq.1, eq:task) | `metacypher/skill.py:text_to_cypher` | Chains analysis → retrieval → generation → repair → (optional) execution. |
 | Online structure-retrieval stage aggregator | `metacypher/subgraph_retrieval.py` | Orchestrator + re-exports of `beam_search`, `path_scorer`, `validate_rank`. |
 
 ## Experiment-supporting code
 
-| Paper artifact (ref) | Code location | Note |
+| Evaluation artifact | Code location | Note |
 | --- | --- | --- |
 | `tab:mechanism` — gold meta-path recall@B, probe precision, empty-result EX | `metacypher/diagnostics.py:gold_metapath_recall_at_b`, `probe_precision`, `empty_result_accuracy`, `mechanism_diagnostics` | Deterministic, script-derived from gold/predicted provenance subgraphs. |
 | `fig:error_attr` — structural-hallucination attribution (phantom node/relation/attribute, invalid connectivity) | `metacypher/diagnostics.py:classify_hallucinations`, `hallucination_attribution`, `parse_cypher`, `SchemaView` | Regex Cypher extractor validated against schema; no external parser. |
@@ -85,17 +80,17 @@ Every `file:symbol` below was verified against the code with grep/read.
   `beam_search.SemanticGuidedBeamSearch`. The two are not yet joined into one path.
 
 - **`correction.py` is the baseline paradigm, not a MetaCypher contribution.**
-  The paper explicitly contrasts MetaCypher (validate-before-generate) with
+  MetaCypher contrasts MetaCypher (validate-before-generate) with
   post-hoc repair / execution-feedback baselines. `correction.py` exists so the
   pipeline emits runnable Cypher; it substantiates no mechanism claim.
 
-- **Attribute-constraint blindness (C2) is intentionally unimplemented.** The paper
+- **Attribute-constraint blindness (C2) is intentionally unimplemented.** The method
   states (subsec:boundary) that attribute predicates are placed but not validated
   offline; numeric predicates are applied only by the online probe. The code matches
   this: `catalog.py:_build_anchor_index` records which attributes *can* host a
   predicate but never evaluates one.
 
-- **Diagnostics/instrumentation compute metrics; they do not reproduce the paper's
+- **Diagnostics/instrumentation compute metrics; they do not reproduce the method's
   reported numbers.** `diagnostics.py` and `instrumentation.py` are the measurement
   harness (with `test_diagnostics.py`, `test_instrumentation.py`); the actual
   benchmark tables are not regenerated from a committed run in this repo.

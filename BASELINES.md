@@ -4,10 +4,10 @@ MetaCypher is compared against four categories of alternatives to its
 pre-generation, catalog-grounded structure selection, plus prompt-based
 references. Below, each compared system is listed with its one-line description,
 **the specific configuration MetaCypher compares against** (as adapted in the
-paper), and its citation key.
+evaluation setup), and its citation key.
 
-BibTeX for every key is in [CITATIONS.bib](CITATIONS.bib), copied verbatim from
-the paper's `.bib` sources. All metrics in the paper: `Exec.` (runs without
+BibTeX for every key is in [CITATIONS.bib](CITATIONS.bib), collected from
+the benchmark setup `.bib` sources. All metrics in the evaluation: `Exec.` (runs without
 error on Neo4j), `EX` (execution accuracy, primary), `PSJS` (provenance-subgraph
 Jaccard similarity, `feng2025cypherbench`).
 
@@ -29,7 +29,7 @@ Jaccard similarity, `feng2025cypherbench`).
 | Graph-native | FINER-SQL | Small LMs boosted for Text-to-SQL via fine-grained execution feedback, adapted to graph queries. | Trains small LMs via **group relative policy optimization (GRPO)** with dense, fine-grained execution feedback as the reward signal. | `others2026finer-sql-boosting-slms-for-te` |
 
 **Adaptation note.** MAC and MAGIC were originally designed for SQL query repair;
-the paper adapts the same post-generation correction paradigm to Cypher by
+the benchmark setup adapts the same post-generation correction paradigm to Cypher by
 replacing the schema serialization and execution-feedback interfaces, **without**
 exposing either method to MetaCypher's pre-generation catalog. All graph-native
 methods decide query structure during or after generation; MetaCypher instead
@@ -59,8 +59,8 @@ GPUs; queries execute on Neo4j.
 | Qwen2.5-Coder-7B-Instruct | Q7B | open-weight |
 | Qwen2.5-Coder-14B-Instruct | Q14B | open-weight (default for system studies) |
 | DeepSeek-v4-flash | DS4 | frontier (no fine-tuning, "--" in SFT row) |
-| GPT-5.3-codex | GPT-5 | frontier (no fine-tuning, "--" in SFT row) |
+| GPT-5.3 | GPT-5 | frontier (no fine-tuning, "--" in SFT row) |
 
 > The backbones are named in `sections/experiment.tex` but carry **no `\cite{}`
-> key** there, so no BibTeX entry exists in the paper sources for them; they are
+> key** there, so no BibTeX entry exists in the benchmark setup sources for them; they are
 > therefore not in [CITATIONS.bib](CITATIONS.bib).

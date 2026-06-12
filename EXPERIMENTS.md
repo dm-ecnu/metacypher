@@ -118,7 +118,7 @@ efficiency table reports (`python3 test_instrumentation.py` covers the module).
 
 Compute EX / PSJS from the corrected Cypher against the CypherBench gold answers
 (use the CypherBench evaluator). **These measured numbers are what should appear
-in the paper** — they replace any previously hand-set values.
+in the evaluation** — they replace any previously hand-set values.
 
 ## 5. Ablations
 
@@ -174,7 +174,7 @@ test set n=2,348 paired):** accuracy parity — EX 0.3624 (catalog) vs 0.3620
 183–316 s mean / 650–822 s p90 per question on the million-edge graphs with
 the 20-probe budget exhausted (median 19/20), while the catalog arm stays at
 a 12–27 s median on every graph; one-time builds ranged 8 s–1.9 h per schema.
-Full provenance: the paper repo's `experiment-result/rq4-perquery-counting.md`.
+Full provenance: the benchmark setup repo's `experiment-result/rq4-perquery-counting.md`.
 
 Independent replication (2026-06-11, same 7 graphs, **ECNU `ecnu-plus`**,
 n=100/graph = 700/config, full pipeline incl. correction): accuracy parity —
@@ -219,5 +219,5 @@ block = mechanism_diagnostics(
 
 The structural checks (phantom node/relation/attribute, invalid connectivity)
 use a stdlib regex parser — no external Cypher parser. `python3
-test_diagnostics.py` covers all metrics. The paper audits these
+test_diagnostics.py` covers all metrics. The benchmark setup audits these
 script-derived labels manually on representative groups.
